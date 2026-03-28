@@ -4,6 +4,9 @@ import './index.css'
 import RenaissancePage from './pages/RenaissancePage'
 import MerciPage from './pages/MerciPage'
 import CheminCECG from './pages/CheminCECG'
+import PaiementPage from './pages/PaiementPage'
+import SolidairePage from './pages/SolidairePage'
+import ParrainagePurPage from './pages/ParrainagePurPage'
 import KYCPage from './pages/KYCPage'
 import Dashboard from './pages/Dashboard'
 import CercleGallien from './pages/CercleGallien'
@@ -19,6 +22,9 @@ function App() {
         <Route path="/" element={<RenaissancePage />} />
         <Route path="/merci" element={<MerciPage />} />
         <Route path="/cecg" element={<CheminCECG />} />
+        <Route path="/cecg/paiement" element={<PaiementPage />} />
+        <Route path="/cecg/solidaire" element={<SolidairePage />} />
+        <Route path="/cecg/parrainage" element={<ParrainagePurPage />} />
         <Route path="/kyc" element={<KYCPage />} />
 
         {/* Authentifié */}
