@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: #FFFFFF;
+    color: #111111;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-noir text-blanc font-body font-medium px-6 py-3 rounded-sm transition-colors duration-200 hover:bg-or disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-blanc text-noir font-body font-medium px-6 py-3 rounded-sm border border-or transition-colors duration-200 hover:bg-or-clair disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-noir font-body font-medium px-6 py-3 rounded-sm transition-colors duration-200 hover:bg-gris-clair disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .gold-rule {
+    @apply border-0 border-t border-or;
+  }
+
+  .card {
+    @apply bg-blanc rounded-sm shadow-sm p-6 border border-gris;
+  }
+
+  .badge-or {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium font-body uppercase tracking-wider bg-or-clair text-or-fonce;
+  }
+}
