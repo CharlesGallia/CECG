@@ -13,6 +13,8 @@ import CercleGallien from './pages/CercleGallien'
 import CRMFilleuls from './pages/CRMFilleuls'
 import MeritePage from './pages/MeritePage'
 import Profil from './pages/Profil'
+import VerificationPage from './pages/VerificationPage'
+import PagePubliqueGallien from './pages/PagePubliqueGallien'
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
         <Route path="/cecg/solidaire" element={<SolidairePage />} />
         <Route path="/cecg/parrainage" element={<ParrainagePurPage />} />
         <Route path="/kyc" element={<KYCPage />} />
+        <Route path="/verifier/:numero" element={<VerificationPage />} />
+        <Route path="/g/:numero" element={<PagePubliqueGallien />} />
 
         {/* Authentifié */}
         <Route path="/dashboard" element={<Dashboard />} />
