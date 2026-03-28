@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './index.css'
 
-// Pages (to be implemented in subsequent prompts)
 import RenaissancePage from './pages/RenaissancePage'
+import MerciPage from './pages/MerciPage'
 import CheminCECG from './pages/CheminCECG'
 import KYCPage from './pages/KYCPage'
 import Dashboard from './pages/Dashboard'
@@ -15,19 +15,19 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes */}
+        {/* Public */}
         <Route path="/" element={<RenaissancePage />} />
+        <Route path="/merci" element={<MerciPage />} />
         <Route path="/cecg" element={<CheminCECG />} />
         <Route path="/kyc" element={<KYCPage />} />
 
-        {/* Protected routes */}
+        {/* Authentifié */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/cercle" element={<CercleGallien />} />
         <Route path="/filleuls" element={<CRMFilleuls />} />
         <Route path="/merite" element={<MeritePage />} />
         <Route path="/profil" element={<Profil />} />
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
