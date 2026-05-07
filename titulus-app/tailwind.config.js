@@ -43,6 +43,7 @@ export default {
         'pulse-or': 'pulse-or 2.4s ease-in-out infinite',
         'live-blink': 'live-blink 1.4s ease-in-out infinite',
         'fade-up': 'fade-up 0.6s ease-out',
+        'armoiries-float': 'armoiries-float 7s ease-in-out infinite',
       },
       keyframes: {
         'pulse-or': {
@@ -56,6 +57,10 @@ export default {
         'fade-up': {
           '0%': { opacity: '0', transform: 'translateY(12px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'armoiries-float': {
+          '0%, 100%': { transform: 'translateY(0) rotate(-0.5deg)' },
+          '50%': { transform: 'translateY(-12px) rotate(0.5deg)' },
         },
       },
     },

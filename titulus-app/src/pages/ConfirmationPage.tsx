@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { pdf } from '@react-pdf/renderer'
 import FunnelLayout from '../components/FunnelLayout'
 import SectionTitle from '../components/SectionTitle'
-import BlasonCouronne from '../assets/BlasonCouronne'
+import ArmoriesFloating from '../assets/ArmoriesFloating'
 import TitulusCardMock from '../assets/TitulusCardMock'
 import DeclaratioPdf from '../pdf/DeclaratioPdf'
 import { useFunnel } from '../lib/funnelContextValue'
@@ -56,7 +56,7 @@ export default function ConfirmationPage() {
       <div className="text-center mb-12">
         <div className="flex justify-center mb-4 relative">
           <div aria-hidden className="absolute inset-0 bg-or/15 rounded-full blur-3xl animate-pulse-or" />
-          <BlasonCouronne size={220} className="relative" />
+          <ArmoriesFloating size={300} className="relative" />
         </div>
 
         <SectionTitle

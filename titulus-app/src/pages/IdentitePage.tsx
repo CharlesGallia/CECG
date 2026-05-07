@@ -17,7 +17,7 @@ import SectionTitle from '../components/SectionTitle'
 import Field from '../components/Field'
 import Checkbox from '../components/Checkbox'
 import HCaptchaStub from '../components/HCaptchaStub'
-import BlasonCouronne from '../assets/BlasonCouronne'
+import ArmoriesFloating from '../assets/ArmoriesFloating'
 import TitulusCardMock from '../assets/TitulusCardMock'
 import { useFunnel } from '../lib/funnelContextValue'
 
@@ -65,8 +65,11 @@ export default function IdentitePage() {
     <FunnelLayout step="identite">
       {/* Hero */}
       <div className="text-center mb-12 sm:mb-16">
-        <div className="flex justify-center mb-6">
-          <BlasonCouronne size={240} className="drop-shadow-[0_0_40px_rgba(201,168,76,0.35)]" />
+        <div className="flex justify-center mb-6 relative">
+          <div aria-hidden className="absolute inset-0 flex items-center justify-center">
+            <div className="w-[420px] h-[420px] bg-or/10 rounded-full blur-3xl" />
+          </div>
+          <ArmoriesFloating size={360} className="relative" />
         </div>
 
         <SectionTitle
