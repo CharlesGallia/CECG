@@ -9,7 +9,7 @@
  * — Case Gallia Primum Non Nocere
  */
 import { useEffect, useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import FunnelLayout from '../components/FunnelLayout'
 import SectionTitle from '../components/SectionTitle'
 import Field from '../components/Field'
@@ -17,6 +17,7 @@ import Checkbox from '../components/Checkbox'
 import DeclaratioPreview from '../components/DeclaratioPreview'
 import { useFunnel } from '../lib/funnelContextValue'
 import { calculerAge } from '../utils/dates'
+import { titulusApi } from '../lib/titulusApi'
 import type { Declaratio } from '../types'
 
 const PAYS = ['France', 'Belgique', 'Suisse', 'Luxembourg', 'Canada', 'Allemagne', 'Italie', 'Espagne', 'Portugal', 'Royaume-Uni', 'Autre']
@@ -24,7 +25,18 @@ const NATIONALITES = ['Française', 'Belge', 'Suisse', 'Luxembourgeoise', 'Canad
 
 export default function DeclaratioPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { session, update, updateConsents } = useFunnel()
+  const [submitting, setSubmitting] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
+
+  // Stripe redirige ici avec ?session_id=cs_test_xxx — on marque paiementOk côté client.
+  // Le statut serveur a déjà été mis à jour par le webhook.
+  useEffect(() => {
+    if (searchParams.get('session_id')) {
+      update({ paiementOk: true, status: 'PAIEMENT_OK' })
+    }
+  }, [searchParams, update])
 
   const [d, setD] = useState<Declaratio>(() => ({
     prenom: session.declaratio?.prenom ?? session.identite?.prenom ?? '',
@@ -67,12 +79,22 @@ export default function DeclaratioPage() {
 
   const formOk = !Object.values(errors).some((e) => e !== '') && session.consents.primumNonNocere
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitted(true)
+    setApiError(null)
     if (!formOk) return
-    update({ declaratio: d, status: 'DECLARATIO_OK' })
-    navigate('/signature')
+    setSubmitting(true)
+    try {
+      await titulusApi.saveDeclaratio(session.uuid, d, !!session.consents.primumNonNocere)
+      update({ declaratio: d, status: 'DECLARATIO_OK' })
+      navigate('/signature')
+    } catch (err) {
+      console.error(err)
+      setApiError(err instanceof Error ? err.message : 'Erreur réseau.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (!session.identite || !session.paiementOk) return null
@@ -171,10 +193,15 @@ export default function DeclaratioPage() {
             )}
           </div>
 
-          <div className="flex justify-center pt-4">
-            <button type="submit" className="imperial-cta">
+          <div className="flex flex-col items-center gap-3 pt-4">
+            {apiError && (
+              <div role="alert" className="text-cardinal font-sans text-sm border border-cardinal/40 bg-cardinal/10 px-4 py-2 rounded-sm">
+                {apiError}
+              </div>
+            )}
+            <button type="submit" disabled={submitting} className="imperial-cta">
               <span aria-hidden className="text-xl">⚜</span>
-              Continuer vers la signature
+              {submitting ? 'Enregistrement…' : 'Continuer vers la signature'}
               <span aria-hidden>→</span>
             </button>
           </div>

@@ -13,11 +13,12 @@ import { pdf } from '@react-pdf/renderer'
 import FunnelLayout from '../components/FunnelLayout'
 import SectionTitle from '../components/SectionTitle'
 import DeclaratioPreview from '../components/DeclaratioPreview'
-import HCaptchaStub from '../components/HCaptchaStub'
+import HCaptcha from '../components/HCaptcha'
 import SignatureCanvas, { type SignatureCanvasHandle } from '../components/SignatureCanvas'
 import DeclaratioPdf from '../pdf/DeclaratioPdf'
 import { useFunnel } from '../lib/funnelContextValue'
 import { genererNumeroDeclaratio } from '../utils/numero'
+import { titulusApi } from '../lib/titulusApi'
 
 export default function SignaturePage() {
   const navigate = useNavigate()
@@ -59,7 +60,18 @@ export default function SignaturePage() {
         />
       ).toBlob()
 
-      // Téléchargement
+      // Hash SHA-256 du PDF pour la traçabilité
+      const buf = await blob.arrayBuffer()
+      const hashBuf = await crypto.subtle.digest('SHA-256', buf)
+      const pdfHash = Array.from(new Uint8Array(hashBuf))
+        .slice(0, 8)
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('')
+
+      // Persister côté serveur
+      await titulusApi.signDeclaratio(session.uuid, numero, signatureDataUrl, hcaptchaToken!, pdfHash)
+
+      // Téléchargement local
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -67,7 +79,6 @@ export default function SignaturePage() {
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      // Libérer l'URL après un court délai
       setTimeout(() => URL.revokeObjectURL(url), 1000)
 
       update({
@@ -76,7 +87,6 @@ export default function SignaturePage() {
         status: 'DECLARATIO_SIGNEE',
       })
 
-      // Petite pause UX puis redirection
       setTimeout(() => navigate('/kyc'), 400)
     } catch (err) {
       console.error(err)
@@ -130,7 +140,7 @@ export default function SignaturePage() {
 
           <div>
             <div className="imperial-label">Vérification anti-robot (second niveau)</div>
-            <HCaptchaStub onVerify={setHcaptchaToken} />
+            <HCaptcha onVerify={setHcaptchaToken} />
           </div>
 
           <div className="imperial-card-cardinal text-sm font-cormorant text-texte-clair">

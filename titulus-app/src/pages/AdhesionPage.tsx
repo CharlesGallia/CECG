@@ -11,17 +11,22 @@
  *
  * Pas de hCaptcha ici (Stripe Radar fait foi).
  */
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import FunnelLayout from '../components/FunnelLayout'
 import SectionTitle from '../components/SectionTitle'
 import Checkbox from '../components/Checkbox'
 import GallibraCoin from '../assets/GallibraCoin'
 import { useFunnel } from '../lib/funnelContextValue'
+import { titulusApi } from '../lib/titulusApi'
 
 export default function AdhesionPage() {
   const navigate = useNavigate()
-  const { session, update, updateConsents } = useFunnel()
+  const [searchParams] = useSearchParams()
+  const { session, updateConsents } = useFunnel()
+  const [submitting, setSubmitting] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
+  const canceled = searchParams.get('canceled') === 'true'
 
   // Garde de route : pas d'identité => retour étape I
   useEffect(() => {
@@ -30,10 +35,18 @@ export default function AdhesionPage() {
 
   if (!session.identite) return null
 
-  function procederAuPaiement() {
-    // V1 : stub. V2 : POST vers /api/stripe-checkout puis redirect.
-    update({ paiementOk: true, status: 'PAIEMENT_OK' })
-    navigate('/declaratio')
+  async function procederAuPaiement() {
+    setApiError(null)
+    setSubmitting(true)
+    try {
+      const { url } = await titulusApi.startStripeCheckout(session.uuid)
+      // Stripe-hosted page
+      window.location.href = url
+    } catch (err) {
+      console.error(err)
+      setApiError(err instanceof Error ? err.message : 'Erreur Stripe.')
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -185,14 +198,24 @@ export default function AdhesionPage() {
 
       {/* CTA paiement */}
       <div className="flex flex-col items-center gap-4">
+        {canceled && (
+          <div role="alert" className="text-or-pale font-cormorant italic text-sm border border-or/40 bg-or/5 px-4 py-2 rounded-sm">
+            Paiement annulé — vous pouvez réessayer quand vous le souhaitez.
+          </div>
+        )}
+        {apiError && (
+          <div role="alert" className="text-cardinal font-sans text-sm border border-cardinal/40 bg-cardinal/10 px-4 py-2 rounded-sm">
+            {apiError}
+          </div>
+        )}
         <button
           type="button"
           onClick={procederAuPaiement}
-          disabled={!session.consents.retractation}
+          disabled={!session.consents.retractation || submitting}
           className="imperial-cta sm:!min-w-[420px]"
         >
           <span aria-hidden className="text-xl">⚜</span>
-          Procéder au paiement sécurisé — 77 €
+          {submitting ? 'Redirection vers Stripe…' : 'Procéder au paiement sécurisé — 77 €'}
           <span aria-hidden>→</span>
         </button>
         <div className="flex items-center gap-3 text-texte-muet text-xs font-sans tracking-wider">

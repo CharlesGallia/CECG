@@ -16,10 +16,11 @@ import FunnelLayout from '../components/FunnelLayout'
 import SectionTitle from '../components/SectionTitle'
 import Field from '../components/Field'
 import Checkbox from '../components/Checkbox'
-import HCaptchaStub from '../components/HCaptchaStub'
+import HCaptcha from '../components/HCaptcha'
 import ArmoriesFloating from '../assets/ArmoriesFloating'
 import TitulusCardMock from '../assets/TitulusCardMock'
 import { useFunnel } from '../lib/funnelContextValue'
+import { titulusApi } from '../lib/titulusApi'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -32,6 +33,8 @@ export default function IdentitePage() {
   const [email, setEmail] = useState(session.identite?.email ?? '')
   const [hcaptchaToken, setHcaptchaToken] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
 
   const errors = {
     prenom: prenom.trim().length < 2 ? 'Prénom requis (2 caractères minimum).' : prenom.trim().length > 50 ? 'Maximum 50 caractères.' : '',
@@ -46,19 +49,27 @@ export default function IdentitePage() {
     !errors.prenom && !errors.nom && !errors.email &&
     consentsOk && hcaptchaToken !== null
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitted(true)
+    setApiError(null)
     if (!formOk) return
-    update({
-      identite: {
-        prenom: prenom.trim(),
-        nom: nom.trim().toUpperCase(),
-        email: email.trim().toLowerCase(),
-      },
-      status: 'IDENTITE_OK',
-    })
-    navigate('/adhesion')
+    const payload = {
+      prenom: prenom.trim(),
+      nom: nom.trim().toUpperCase(),
+      email: email.trim().toLowerCase(),
+    }
+    update({ identite: payload, status: 'IDENTITE_OK' })
+    setSubmitting(true)
+    try {
+      await titulusApi.saveIdentite(session.uuid, payload, hcaptchaToken!, session.consents)
+      navigate('/adhesion')
+    } catch (err) {
+      console.error(err)
+      setApiError(err instanceof Error ? err.message : 'Erreur réseau.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -199,7 +210,7 @@ export default function IdentitePage() {
         {/* hCaptcha */}
         <div>
           <div className="imperial-label mb-2">Vérification anti-robot</div>
-          <HCaptchaStub onVerify={setHcaptchaToken} />
+          <HCaptcha onVerify={setHcaptchaToken} />
           {submitted && hcaptchaToken === null && (
             <p className="mt-2 text-cardinal text-sm font-sans" role="alert">
               Veuillez compléter la vérification.
@@ -208,10 +219,15 @@ export default function IdentitePage() {
         </div>
 
         {/* CTA */}
-        <div className="pt-4 flex justify-center">
-          <button type="submit" className="imperial-cta">
+        <div className="pt-4 flex flex-col items-center gap-3">
+          {apiError && (
+            <div role="alert" className="text-cardinal font-sans text-sm border border-cardinal/40 bg-cardinal/10 px-4 py-2 rounded-sm">
+              {apiError}
+            </div>
+          )}
+          <button type="submit" disabled={submitting} className="imperial-cta">
             <span aria-hidden className="text-xl">⚜</span>
-            Je poursuis vers l'adhésion
+            {submitting ? 'Envoi…' : 'Je poursuis vers l\'adhésion'}
             <span aria-hidden>→</span>
           </button>
         </div>

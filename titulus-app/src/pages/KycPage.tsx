@@ -12,6 +12,7 @@ import SectionTitle from '../components/SectionTitle'
 import UploadZone from '../components/UploadZone'
 import Checkbox from '../components/Checkbox'
 import { useFunnel } from '../lib/funnelContextValue'
+import { titulusApi } from '../lib/titulusApi'
 
 export default function KycPage() {
   const navigate = useNavigate()
@@ -21,6 +22,8 @@ export default function KycPage() {
   const [selfie, setSelfie] = useState<File | null>(null)
   const [preuveVie, setPreuveVie] = useState<File | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
 
   // Garde de route
   useEffect(() => {
@@ -32,16 +35,38 @@ export default function KycPage() {
   const allFilesOk = !!recto && !!selfie && !!preuveVie
   const canSubmit = allFilesOk && session.consents.pieceCertifiee
 
-  function handleSubmit(e: React.FormEvent) {
+  async function uploadOne(file: File, kind: 'recto' | 'selfie' | 'preuve'): Promise<string> {
+    const { uploadUrl, path } = await titulusApi.getKycUploadUrl(session.uuid, kind, file.type)
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type, 'x-upsert': 'true' },
+      body: file,
+    })
+    if (!res.ok) throw new Error(`Upload ${kind} échoué (${res.status})`)
+    return path
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitted(true)
+    setApiError(null)
     if (!canSubmit) return
-    // V1 : on n'upload pas réellement — V2 : POST vers bucket privé Supabase Storage.
-    update({
-      kycTransmis: true,
-      status: 'KYC_TRANSMIS',
-    })
-    navigate('/confirmation')
+    setSubmitting(true)
+    try {
+      const [pRecto, pSelfie, pPreuve] = await Promise.all([
+        uploadOne(recto!, 'recto'),
+        uploadOne(selfie!, 'selfie'),
+        uploadOne(preuveVie!, 'preuve'),
+      ])
+      await titulusApi.transmitKyc(session.uuid, { recto: pRecto, selfie: pSelfie, preuve: pPreuve })
+      update({ kycTransmis: true, status: 'KYC_TRANSMIS' })
+      navigate('/confirmation')
+    } catch (err) {
+      console.error(err)
+      setApiError(err instanceof Error ? err.message : 'Erreur lors de la transmission KYC.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function copyDate() {
@@ -157,10 +182,15 @@ export default function KycPage() {
           )}
         </div>
 
-        <div className="md:col-span-3 flex justify-center pt-4">
-          <button type="submit" disabled={!canSubmit} className="imperial-cta">
+        <div className="md:col-span-3 flex flex-col items-center gap-3 pt-4">
+          {apiError && (
+            <div role="alert" className="text-cardinal font-sans text-sm border border-cardinal/40 bg-cardinal/10 px-4 py-2 rounded-sm">
+              {apiError}
+            </div>
+          )}
+          <button type="submit" disabled={!canSubmit || submitting} className="imperial-cta">
             <span aria-hidden className="text-xl">⚜</span>
-            Transmettre et valider ma demande
+            {submitting ? 'Téléversement chiffré…' : 'Transmettre et valider ma demande'}
             <span aria-hidden>→</span>
           </button>
         </div>
